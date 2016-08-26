@@ -1,31 +1,34 @@
-package com.harterrt.example
+package com.mozilla.telemetry.views
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
 
-case class BaseClass (
-    ugly_string: Long
+case class Base (
+    client_id: String
 )
 
-case class TargetClass (
-    pretty_string: Long
+case class Target (
+    client_id: String
 )
 
-object FailingMap {
+object FailingView {
   val sparkConf = new SparkConf().setAppName(this.getClass.getName)
   sparkConf.setMaster(sparkConf.get("spark.master", "local[*]"))
   val sc = new SparkContext(sparkConf)
 
-  val sqlContext = new SQLContext(sc)
-  import sqlContext.implicits._
+  val hiveContext = new HiveContext(sc)
+  import hiveContext.implicits._
 
-  def generateTargetClass(input: BaseClass) = {
-    TargetClass(input.ugly_string)
+  def generateCrossSectional(base: Base) = {
+    Target(base.client_id)
   }
 
   def main(args: Array[String]): Unit = {
-    val ds = (1 to 1000).map(xx => new BaseClass(xx)).toDS()
-    val output = ds.map(generateTargetClass)
+    val ds = hiveContext
+      .sql("SELECT * FROM longitudinal")
+      .selectExpr("client_id")
+      .as[Base]
+    val output = ds.map(generateCrossSectional)
 
     println("="*80 + "\n" + output.count + "\n" + "="*80)
   }
