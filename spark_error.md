@@ -1,5 +1,7 @@
 title: Strange Spark Error
 date: 2016-08-26
+tags: spark, scala
+category:mozilla
 
 [TOC]
 
